@@ -1,0 +1,48 @@
+In this assignment, you will create code to return the cosine similarity between two words and
+then two spans of text (sentences).
+
+Part 1
+
+Using a precomputed bank of vectors (e.g., https://nlp.stanford.edu/projects/glove/
+                                        - use either glove.6B.zip, glove.42B.300d.zip or glove.840B.300d.zip),
+randomly select 25 word pairs and return the cosine similarity between each pair of words.
+Based on the distribution of scores, analyze whether or not cosine similarity matches your expectations
+for synonyms, antonyms or other observed semantic relations (hypernym, hyponym, meronym, holonym, etc.).
+
+
+Part 2
+
+Randomly select 25 sentence pairs from 'Assignment_4_Input.txt' and return the cosine similarity
+between each pair of sentences. Based on the distribution of scores, analyze what may be driving
+similarity (or not) between sentences. Your code will have to create word count vectors based on
+the two sentences (rather than precomputed vectors).
+
+
+Submission
+
+Submit the following via Moodle by 11:55 PM on Friday, November 3, 2017 (submission will be open
+until Saturday, November 4, 2017 by 11:55 PM for 50% credit):
+
+(1) Your system source code which should have (1) a cosine similarity computation method; (2) a
+vector creation method (for the sentence comparison); and (3) should allow the user randomly
+select word and sentence pairs from the vector and input documents (with the system returning
+the cosine similarity for each pair).
+
+(2) A system write-up that contains (a) your list of word and sentence pairs with associated
+cosine similarities (sorted by score in some way), (b) analysis of whether or not the word pair
+and sentence pair score conform to your expectations. Why or why not, provide examples. Suggest
+paths of improvement.
+
+As indicated in the syllabus, if you so choose, you can work with one person. If you
+collaborate in this way, submit only one version of the code and write up (indicating
+the collaborating pairing in the comments of the code).
+
+In terms of the code, feel free to use any libraries you are comfortable with.
+Additionally, I have no preconceived notion about how the code should be organized
+for this assignment. This said you should (always) strive for clear, intuitive, well
+commented code – for example, it should be clear where the calculation of probabilities
+is happening and where perplexity is being calculated. If the code is not performing as
+it should and your code is not clear, intuitive or well commented, you run the risk of
+losing more points if the grader or I can’t figure it out.
+
+Start early, divide, conquer and asks lots of questions.
