@@ -1,14 +1,9 @@
 import random
-from gensim.models import Word2Vec
-from nltk.corpus import brown
-import numpy as np
 import pandas as pd
 import csv
 from timeit import default_timer as timer
 
 from scipy import spatial
-# import nltk
-# nltk.download('words')
 
 def main():
     f = open("input.txt", "r")
@@ -18,49 +13,100 @@ def main():
     # Remove new line character from end of every sentence
     for i in range(len(sentence_list)):
         sentence_list[i] = sentence_list[i][:-1]
-    print(sentence_list)
+    # print(sentence_list)
 
     glove_file_name = "glove.840B.300d" # This one takes forever, load it once then use pickel!!!
-    # glove_file_name = "glove.6B.200d"
-    words = loadGloveModel(glove_file_name)
+    # glove_file_name = "glove.6B.50d"
+    # loadGloveModel(glove_file_name)
     start = timer()
-    pd.read_pickle("pickel_files/{}.pkl".format(glove_file_name))
+    words = pd.read_hdf("hdf_files/{}.hdf".format(glove_file_name), 'mydata')
     stop = timer()
     minutes = (stop - start) // 60
     secs = (stop - start) % 60
-    print("Read pickel took {} mins {} secs".format(minutes, secs))
+    print("Read hdf took {} mins {} secs".format(minutes, secs))
 
-    word_pairs = randomlySelectWordPairs(sentence_list)
-    calcCosSimilarity(words, word_pairs)
+    clean_sentence_list = clean_input(sentence_list)
+    word_pairs = randomlySelectWordPairs(clean_sentence_list)
 
+    # not_in_vocab(sentence_list, words)
+    calcCosSimilarityWordPairs(words, word_pairs)
+
+
+def not_in_vocab(sentence_list, words):
+    errors = []
+    clean_sentence = clean_input(sentence_list)
+    for sentence in clean_sentence:
+        for word in sentence.split():
+            try:
+                words.loc[word].as_matrix()
+            except KeyError as e:
+                not_found_word = str(e).split()[2][1:-1]
+                print("{} not in vocabulary\n".format(not_found_word))
+                if not not_found_word in errors:
+                    errors.append(not_found_word)
+    print(errors)
+
+
+def clean_input(sentence_list):
+    # Cleaning so as to reduce words that are not present in vocab
+    '''
+    Only words in input that are not in the vector .txt (Big one, 840B.300d) (after this cleaning, that is)
+    ['BoJack', 'Cordovia']
+    '''
+    for sentence_index in range(len(sentence_list)):
+        sentence = sentence_list[sentence_index]
+        sentence = sentence.replace("Mr.", "Mister ")
+        sentence = sentence.replace("-", " ")
+        sentence = sentence.replace("'re ", " are ")
+        sentence = sentence.replace("'ll ", " will ")
+        sentence = sentence.replace("'ve ", " have ")
+        sentence = sentence.replace("n't ", " not ")
+        sentence = sentence.replace("et's ", "et us ") # Fixes [Ll]et's
+        sentence = sentence.replace("Horsin' ", "Horsing ")
+        sentence = sentence.replace("DE-Nile", "denile")
+        sentence = sentence.replace("$500,000", "five hundered thousand dollars")
+        sentence = sentence.replace("game's ", "game is ")
+        sentence = sentence.replace("everybody's ", "everybody is ")
+        sentence = sentence.replace("hat's", "hat is") # that, what
+        sentence = sentence.replace("who's ", "who is ")
+        sentence = sentence.replace("Time's ", "Time is ")
+        sentence = sentence.replace("one's ", "one is ")
+        sentence = sentence.replace("ere's ", "ere is ") #there, here
+        sentence = sentence.replace("Guy's ", "Guy has ") #there, here
+
+        # As we care more about word meaning than grammatical relationships, we will loose track of possession
+        # in this cleaning process
+        sentence = sentence.replace("'s", "")
+
+        sentence = "".join(c for c in sentence if c not in ('!', '.', ':', ',', '"', '?', "'"))
+
+        sentence_list[sentence_index] = sentence
+
+    # print("CLEANED", sentence_list)
+    return sentence_list
 
 def randomlySelectWordPairs(sentence_list, n=25):
     '''
-    Returns a list of word pairs, list of length n, pairs found in sentences of sentence_list
+    Gets list of random word pairs
     :param sentence_list: List of sentences
     :param n: Number word pairs desired (Optional, default = 25)
     :return: List of word pairs
     '''
-    sentence_list_for_pairs = []
-    for i in range(len(sentence_list)):
-        if len(sentence_list[i].split()) > 1:
-            sentence_list_for_pairs.append(sentence_list[i])
-
+    word_list = []
+    for sentence in sentence_list:
+        word_list += sentence.split()
 
     word_pairs = []
     for i in range(n):
-        sentence = random.choice(sentence_list_for_pairs)
-        word_list = sentence.split()
-        randint = random.randrange(0,len(word_list)-1)
-        word_pair = word_list[randint] + " "
-        word_pair += word_list[randint+1]
+        w1 = random.choice(word_list)
+        w2 = random.choice(word_list)
+        word_pair = w1 + " " + w2
         word_pairs.append(word_pair)
 
-    print(word_pairs)
-
+    # print(word_pairs)
     return word_pairs
 
-def calcCosSimilarity(words, word_pairs):
+def calcCosSimilarityWordPairs(words, word_pairs):
     errors = "ERRORS:\n"
     for pair in word_pairs:
         pair = "".join(c for c in pair if c not in ('!', '.', ':', ',', '"', '?'))
@@ -69,6 +115,7 @@ def calcCosSimilarity(words, word_pairs):
         w2 = pair[1]
 
         try:
+            # https://stackoverflow.com/questions/18424228/cosine-similarity-between-2-number-lists
             dataSetI = words.loc[w1].as_matrix()
             dataSetII = words.loc[w2].as_matrix()
             sim_score = spatial.distance.cosine(dataSetI, dataSetII)
@@ -77,8 +124,8 @@ def calcCosSimilarity(words, word_pairs):
             not_found_word = str(e).split()[2]
             # print("ERROR: {} not in vocabulary for pair: {} {}".format(not_found_word, w1, w2))
             errors += "{} not in vocabulary for pair: {} {}\n".format(not_found_word, w1, w2)
-
-    print(errors)
+    if len(errors) > 9:
+        print(errors)
 
 def loadGloveModel(glove_file_name, path = "glove_vector_sets/"):
     gloveFile = "{}{}.txt".format(path, glove_file_name)
@@ -90,7 +137,9 @@ def loadGloveModel(glove_file_name, path = "glove_vector_sets/"):
     minutes = (stop-start) // 60
     secs = (stop-start) % 60
     print("Done.",len(words)," words loaded in {} minutes {} seconds".format(minutes, secs))
-    words.to_pickle("pickel_files/"+glove_file_name+".pkl")
+
+    # https://stackoverflow.com/questions/29547522/python-pandas-to-pickle-cannot-pickle-large-dataframes
+    words.to_hdf("hdf_files/"+glove_file_name+".hdf", 'mydata', mode='w')
     return words
 
 if __name__ == "__main__":
