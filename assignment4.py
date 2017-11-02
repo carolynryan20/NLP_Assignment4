@@ -15,7 +15,7 @@ def main():
         sentence_list[i] = sentence_list[i][:-1]
     # print(sentence_list)
 
-    glove_file_name = "glove.840B.300d" # This one takes forever, load it once then use pickel!!!
+    glove_file_name = "glove.840B.300d" # This one takes forever, load it once then use hdf!!!
     # glove_file_name = "glove.6B.50d"
     # loadGloveModel(glove_file_name)
     start = timer()
@@ -25,11 +25,14 @@ def main():
     secs = (stop - start) % 60
     print("Read hdf took {} mins {} secs".format(minutes, secs))
 
-    clean_sentence_list = clean_input(sentence_list)
-    word_pairs = randomlySelectWordPairs(clean_sentence_list)
+    word_pairs = randomlySelectWordPairs(words)
 
     # not_in_vocab(sentence_list, words)
     calcCosSimilarityWordPairs(words, word_pairs)
+
+    clean_sentence_list = clean_input(sentence_list)
+    random_sentence_pairs = randomlySelectSentencePairs(clean_sentence_list)
+    calcCosSimilaritySentences(random_sentence_pairs)
 
 
 def not_in_vocab(sentence_list, words):
@@ -85,26 +88,32 @@ def clean_input(sentence_list):
     # print("CLEANED", sentence_list)
     return sentence_list
 
-def randomlySelectWordPairs(sentence_list, n=25):
+def randomlySelectWordPairs(words, n = 25):
     '''
     Gets list of random word pairs
     :param sentence_list: List of sentences
     :param n: Number word pairs desired (Optional, default = 25)
     :return: List of word pairs
     '''
-    word_list = []
-    for sentence in sentence_list:
-        word_list += sentence.split()
-
     word_pairs = []
     for i in range(n):
-        w1 = random.choice(word_list)
-        w2 = random.choice(word_list)
+        w1 = random.choice(words.index)
+        w2 = random.choice(words.index)
         word_pair = w1 + " " + w2
         word_pairs.append(word_pair)
 
     # print(word_pairs)
     return word_pairs
+
+def randomlySelectSentencePairs(sentence_list, n = 25):
+    random_sentence_list = []
+    for i in range(n):
+        s1 = random.choice(sentence_list)
+        s2 = random.choice(sentence_list)
+        s_pair = [s1, s2]
+        random_sentence_list.append(s_pair)
+
+    return random_sentence_list
 
 def calcCosSimilarityWordPairs(words, word_pairs):
     errors = "ERRORS:\n"
@@ -126,6 +135,28 @@ def calcCosSimilarityWordPairs(words, word_pairs):
             errors += "{} not in vocabulary for pair: {} {}\n".format(not_found_word, w1, w2)
     if len(errors) > 9:
         print(errors)
+
+def calcCosSimilaritySentences(random_sentence_pairs):
+    for sentence_pair in random_sentence_pairs:
+        s1 = sentence_pair[0]
+        s2 = sentence_pair[1]
+        s1_vector, s2_vector = makeSentenceVectors(s1, s2)
+        similarity = spatial.distance.cosine(s1_vector, s2_vector)
+        print("{} for '{}.' and '{}.'".format(round(similarity, 5), s1, s2))
+
+def makeSentenceVectors(s1,s2):
+    word_list = s1.split() + [i for i in s2.split() if i not in s1]
+    s1_vector = [0 for i in word_list]
+    s2_vector = [0 for i in word_list]
+
+    for i in range(len(word_list)):
+        word = word_list[i]
+        if word in s1:
+            s1_vector[i] = 1
+        if word in s2:
+            s2_vector[i] = 1
+
+    return s1_vector, s2_vector
 
 def loadGloveModel(glove_file_name, path = "glove_vector_sets/"):
     gloveFile = "{}{}.txt".format(path, glove_file_name)
