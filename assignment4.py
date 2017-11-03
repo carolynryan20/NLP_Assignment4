@@ -9,10 +9,21 @@ from pandas import read_hdf as pd_read_hdf
 from os import makedirs, strerror
 from os.path import isfile, isdir
 from sys import path as sys_path
+from sys import argv as sys_argv
+
+# NLP Assignment 4
+# Carolyn Ryan
 
 def main():
-    # glove_file_name = "glove.840B.300d" # This one takes forever, load it once then use hdf!!!
-    glove_file_name = "glove.6B.50d"
+    '''
+    Run part one and two
+    '''
+    if len(sys_argv) > 1:
+        glove_file_name = sys_argv[1]
+    else:
+        glove_file_name = "glove.6B.50d"
+        print("Attempting to use glove.6B.50d for vector configuration, if you want a different vector file, please use command line to input one\n"
+              "Form: python3 assignment4.py glove.6B.50d")
     words = getModel(glove_file_name)
 
     # PART ONE
@@ -88,7 +99,6 @@ def calcCosSimilarityWordPairs(words, word_pairs):
     for key,value in sim_score_dict.items():
         print("{} for '{}'".format(key, value))
 
-
 def calcCosSimilaritySentences(random_sentence_pairs):
     '''
     Calculate cosine similarity scores for sentences
@@ -122,7 +132,11 @@ def makeSentenceVectors(s1,s2):
     :param s2: Sentence 2: str
     :return: sentence_one_vector, sentence_one_vector: list of 0/1
     '''
-    word_list = s1.split() + [i for i in s2.split() if i not in s1]
+    s1 = s1.split()
+    s2 = s2.split()
+
+    word_list = make_word_list(s1, s2)
+
     s1_vector = [0 for i in word_list]
     s2_vector = [0 for i in word_list]
 
@@ -134,6 +148,29 @@ def makeSentenceVectors(s1,s2):
             s2_vector[i] = 1
 
     return s1_vector, s2_vector
+
+
+def make_word_list(s1, s2):
+    '''
+    A method that makes the word list
+    And in a hack-y way ensures that repeat words are dealt with as we would want them to be
+    :param s1: List of all words in s1
+    :param s2: List of all words in s2
+    :return: List of all words in both, including repeats when appropriate
+    '''
+    for i in range(len(s1)):
+        word = s1[i]
+        for j in range(i + 1, len(s1)):
+            if s1[j] == word:
+                s1[j] = word + "1"
+    for i in range(len(s2)):
+        word = s2[i]
+        for j in range(i + 1, len(s2)):
+            if s2[j] == word:
+                s2[j] = word + "1"
+    word_list = s1 + [i for i in s2 if i not in s1]
+    return word_list
+
 
 def cosine_similarity(v, w):
     '''
