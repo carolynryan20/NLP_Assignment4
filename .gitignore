@@ -1,0 +1,4 @@
+hdf_files/*
+glove_vector_sets/*
+.idea/
+__pycache__/

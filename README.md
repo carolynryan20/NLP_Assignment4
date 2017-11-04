@@ -6,4 +6,7 @@ Download pre-trained word vector set from https://nlp.stanford.edu/projects/glov
 
 The larger the set, the more word coverage you will get, but the more time the loading will take. 
 
-Use ```loadGloveModel(name_of_file, path)``` to make a hdf file of this for later use.
+### To run
+Place a vector file into the empty directory ```glove_vector_sets```
+
+Run from terminal ```python3 assignment4.py glove.6B.50d``` or ```python3 assignment4.py gloveVectorNameWithoutExtension```
